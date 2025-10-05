@@ -1,7 +1,7 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tzdata;
-import 'package:flutter_native_timezone_updated_gradle/flutter_native_timezone.dart';
+import 'package:flutter/services.dart';
 
 class NotificationService {
   NotificationService._();
@@ -23,8 +23,11 @@ class NotificationService {
     // Asegurar TZ inicializado y zona local correcta (Android/iOS)
     tzdata.initializeTimeZones();
     try {
-      final name = await FlutterNativeTimezone.getLocalTimezone();
-      tz.setLocalLocation(tz.getLocation(name));
+      const channel = MethodChannel('payreminder/timezone');
+      final name = await channel.invokeMethod<String>('getLocalTimezone');
+      if (name != null && name.isNotEmpty) {
+        tz.setLocalLocation(tz.getLocation(name));
+      }
     } catch (_) {
       // Fallback: mantener tz.local como esté configurado (p. ej., por TimezoneService)
     }

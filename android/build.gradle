@@ -13,6 +13,23 @@ subprojects {
     project.evaluationDependsOn(":app")
 }
 
+// Workaround: algunos plugins antiguos (ej: flutter_native_timezone_updated_gradle 2.0.3)
+// no definen 'namespace' requerido por AGP 8+. Inyectamos uno para evitar fallo.
+subprojects { proj ->
+    if (proj.name in ["flutter_native_timezone_updated_gradle", "flutter_native_timezone"]) {
+        afterEvaluate { p ->
+            def androidExt = p.extensions.findByName("android")
+            if (androidExt != null) {
+                def needs = !androidExt.hasProperty("namespace") || androidExt.namespace == null || androidExt.namespace.toString().trim().isEmpty()
+                if (needs) {
+                    androidExt.namespace = "com.fix." + p.name
+                    println "[Workaround] Namespace asignado a ${p.name}: ${androidExt.namespace}"
+                }
+            }
+        }
+    }
+}
+
 tasks.register("clean", Delete) {
     delete rootProject.buildDir
 }
